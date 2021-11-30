@@ -1,37 +1,73 @@
 import React from 'react';
 import axios from 'axios';
+import User from './components/User'
+import FollowerList from './components/FollowerList';
 
 
 
 class App extends React.Component {
-  constructor () {
-    super ();
-    this.state = {
-      user: [],
-      followers: []
+
+    state = {
+      user: {},
+      followers: [],
+      search: "wb1110"
     }
 
 
+  
+
+  handleChange = (event) => {
+    this.setState({
+      ...this.state,
+      search: event.target.value
+    });
+  }
+
+  handleSubmit = (event) => {
+    event.preventDefault();
+    axios.get("https://api.github.com/users/${this.state.search")
+    .then((res) => {
+      this.setState({
+        ...this.state,
+        user: res.data 
+      });
+      // console.log(user)
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+    
   }
 
   componentDidMount() {
-    axios.get("https://api.github.com/users/wb1110")
+    axios.get("https://api.github.com/users/${this.state.search")
         .then((res) => {
-          const user = res.data;
-          this.setState({ user });
+          this.setState({
+            ...this.state,
+            user: res.data 
+          });
           // console.log(user)
         })
         .catch((err) => {
           console.log(err);
         })
 
-    axios.get("https://api.github.com/users/wlongmire/followers")
-        .then((res) => {
-          console.log(res)
-        })
-        .catch((err) => {
-          console.log(err);
-        })
+
+  }
+
+  componentDidUpdate(prevState) {
+    if (this.state.user !== prevState.user) {
+      axios.get(`https://api.github.com/users/${this.state.user}/followers`)
+      .then((res) => {
+        this.setState({
+          ...this.state,
+          followers: res.data
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+      })
+    }
   }
 
   render() {
@@ -39,26 +75,13 @@ class App extends React.Component {
     return(
     <div>
       <h1>GITHUB INFO</h1>
-      <form>
-        <input type="text" value="Github Handle"/>
+      <form onSubmit={this.handleSubmit}>
+        <input type="text" value={this.state.search} onChange={this.handleChange}/>
         <input type="submit" value="Search"/>
       </form>
-      <div>
-        <img src={this.state.user.avatar_url} alt="William Buchanan Headshot"/>
-        {/* res.name */}
-        <h2>{this.state.user.name}</h2>
-        {/* res.login */}
-        <p>{this.state.user.login}</p>
-        {/* res.public_repos */}
-        <h3>TOTAL REPOS: {this.state.user.public_repos}</h3>
-        {/* res.followers */}
-        <h3>TOTAL FOLLOWERS: {this.state.user.followers}</h3>
-      </div>
-      <div>
-        <h2>FOLLOWERS:</h2>
-        {/* Map over followers to generate avatar_url and name */}
-        
-      </div>
+      <User user={this.state.user}/>
+      <FollowerList followers={this.state.followers} />
+
 
       
     </div>);
